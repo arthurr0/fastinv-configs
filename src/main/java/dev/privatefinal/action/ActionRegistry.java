@@ -1,6 +1,6 @@
 package dev.privatefinal.action;
 
-import dev.privatefinal.menu.ConfigMenu;
+import dev.privatefinal.menu.MenuView;
 import dev.privatefinal.text.TextRenderer;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
@@ -35,7 +35,7 @@ public class ActionRegistry {
         this.menuOpener = menuOpener;
     }
 
-    public void execute(List<String> definitions, Player player, ConfigMenu menu) {
+    public void execute(List<String> definitions, Player player, MenuView menu) {
         if (definitions == null || player == null) {
             return;
         }
@@ -44,7 +44,7 @@ public class ActionRegistry {
         }
     }
 
-    private void executeSingle(String definition, Player player, ConfigMenu menu) {
+    private void executeSingle(String definition, Player player, MenuView menu) {
         if (definition == null) {
             return;
         }
@@ -93,7 +93,7 @@ public class ActionRegistry {
         });
 
         this.register("page", context -> {
-            ConfigMenu menu = context.menu();
+            MenuView menu = context.menu();
             String argument = context.argument();
             if (menu == null || argument == null) {
                 return;

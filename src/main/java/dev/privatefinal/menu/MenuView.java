@@ -157,10 +157,10 @@ public class MenuView extends FastInv {
             handler.invoke(this.definition, new ClickContext(this.player, this, event, itemId));
         } catch (IllegalAccessException exception) {
             Bukkit.getLogger().log(Level.SEVERE,
-                    "Nie udalo sie wywolac handlera @Click dla itemu '" + itemId + "'", exception);
+                    "Failed to invoke @Click handler for item '" + itemId + "'", exception);
         } catch (InvocationTargetException exception) {
             Bukkit.getLogger().log(Level.SEVERE,
-                    "Blad w handlerze @Click dla itemu '" + itemId + "'", exception.getCause());
+                    "Error in @Click handler for item '" + itemId + "'", exception.getCause());
         }
     }
 

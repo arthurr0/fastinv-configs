@@ -1,6 +1,7 @@
 plugins {
     id("java")
     id("com.gradleup.shadow") version "9.4.2"
+    id("xyz.jpenilla.run-paper") version "3.0.2"
 }
 
 group = "dev.privatefinal.example"
@@ -14,7 +15,7 @@ java {
 
 repositories {
     mavenCentral()
-    maven("https://jitpack.io")
+    maven("https://maven.minecodes.pl/releases")
     maven("https://storehouse.okaeri.eu/repository/maven-public/")
     maven("https://repo.papermc.io/repository/maven-public/")
     maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
@@ -33,11 +34,17 @@ tasks.processResources {
 
 tasks.shadowJar {
     archiveClassifier.set("")
-    exclude("menus/shop.yml")
     relocate("fr.mrmicky.fastinv", "dev.privatefinal.example.libs.fastinv")
     relocate("eu.okaeri", "dev.privatefinal.example.libs.okaeri")
 }
 
 tasks.build {
     dependsOn(tasks.shadowJar)
+}
+
+tasks.runServer {
+    minecraftVersion("1.21.11")
+    javaLauncher.set(javaToolchains.launcherFor {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    })
 }

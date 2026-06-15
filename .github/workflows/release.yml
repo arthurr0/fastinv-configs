@@ -1,13 +1,16 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - 'v*'
   workflow_dispatch:
     inputs:
-      version:
-        description: 'Release version (e.g. 1.2.3, without a leading v)'
+      bump:
+        description: 'Next development version bump'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+        default: patch
         required: true
 
 permissions:
@@ -20,15 +23,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Resolve version
-        id: meta
+      - name: Compute versions
+        id: ver
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            version="${{ github.event.inputs.version }}"
-          else
-            version="${GITHUB_REF_NAME#v}"
-          fi
-          echo "version=$version" >> "$GITHUB_OUTPUT"
+          current="$(grep -E '^version=' gradle.properties | head -1 | cut -d= -f2 | tr -d '[:space:]')"
+          case "$current" in
+            *-SNAPSHOT) ;;
+            *) echo "::error::gradle.properties version '$current' is not a -SNAPSHOT"; exit 1 ;;
+          esac
+          release="${current%-SNAPSHOT}"
+          major="$(echo "$release" | cut -d. -f1)"
+          minor="$(echo "$release" | cut -d. -f2)"
+          patch="$(echo "$release" | cut -d. -f3)"
+          case "${{ inputs.bump }}" in
+            major) next="$((major + 1)).0.0-SNAPSHOT" ;;
+            minor) next="${major}.$((minor + 1)).0-SNAPSHOT" ;;
+            *)     next="${major}.${minor}.$((patch + 1))-SNAPSHOT" ;;
+          esac
+          echo "release=$release" >> "$GITHUB_OUTPUT"
+          echo "next=$next" >> "$GITHUB_OUTPUT"
+          echo "Releasing $release, next development version $next"
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
@@ -39,15 +53,35 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Publish to mineCodes (releases)
-        run: ./gradlew :publish -PreleaseVersion=${{ steps.meta.outputs.version }} --no-daemon --stacktrace
+      - name: Publish release to mineCodes (releases)
+        run: ./gradlew :publish -PreleaseVersion=${{ steps.ver.outputs.release }} --no-daemon --stacktrace
         env:
           MINECODES_USERNAME: ${{ secrets.MINECODES_USERNAME }}
           MINECODES_PASSWORD: ${{ secrets.MINECODES_PASSWORD }}
 
-      - name: Create GitHub Release
-        if: github.event_name == 'push'
+      - name: Create tag and GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: build/libs/*.jar
+          tag_name: v${{ steps.ver.outputs.release }}
+          target_commitish: ${{ github.sha }}
+          name: v${{ steps.ver.outputs.release }}
           generate_release_notes: true
+          files: build/libs/*.jar
+
+      - name: Bump to next development version
+        run: |
+          sed -i -E "s/^version=.*/version=${{ steps.ver.outputs.next }}/" gradle.properties
+
+      - name: Publish next snapshot to mineCodes (snapshots)
+        run: ./gradlew :publish --no-daemon --stacktrace
+        env:
+          MINECODES_USERNAME: ${{ secrets.MINECODES_USERNAME }}
+          MINECODES_PASSWORD: ${{ secrets.MINECODES_PASSWORD }}
+
+      - name: Commit next development version
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add gradle.properties
+          git commit -m "chore: prepare next development version ${{ steps.ver.outputs.next }}"
+          git push origin HEAD:${{ github.ref_name }}

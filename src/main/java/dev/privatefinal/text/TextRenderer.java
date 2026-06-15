@@ -1,5 +1,6 @@
 package dev.privatefinal.text;
 
+import me.clip.placeholderapi.PlaceholderAPI;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -28,7 +29,7 @@ public class TextRenderer {
             return "";
         }
         if (player != null && PLACEHOLDER_API_PRESENT) {
-            return me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(player, input);
+            return PlaceholderAPI.setPlaceholders(player, input);
         }
         return input;
     }

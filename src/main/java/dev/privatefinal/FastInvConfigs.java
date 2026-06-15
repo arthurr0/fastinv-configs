@@ -3,14 +3,21 @@ package dev.privatefinal;
 import dev.privatefinal.action.ActionRegistry;
 import dev.privatefinal.config.MenuConfig;
 import dev.privatefinal.item.ItemFactory;
-import dev.privatefinal.menu.ConfigMenu;
-import dev.privatefinal.menu.MenuRegistry;
+import dev.privatefinal.menu.Click;
+import dev.privatefinal.menu.ClickContext;
+import dev.privatefinal.menu.ConfiguredInventory;
+import dev.privatefinal.menu.MenuView;
 import dev.privatefinal.text.TextRenderer;
+import eu.okaeri.configs.yaml.bukkit.YamlBukkitConfigurer;
+import eu.okaeri.configs.yaml.bukkit.serdes.SerdesBukkit;
 import fr.mrmicky.fastinv.FastInvManager;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.lang.reflect.Method;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public final class FastInvConfigs {
 
@@ -18,7 +25,9 @@ public final class FastInvConfigs {
     private static TextRenderer textRenderer;
     private static ItemFactory itemFactory;
     private static ActionRegistry actionRegistry;
-    private static MenuRegistry menuRegistry;
+
+    private static final Map<Class<?>, Registered> BY_CLASS = new LinkedHashMap<>();
+    private static final Map<String, Registered> BY_ID = new LinkedHashMap<>();
 
     private FastInvConfigs() {
     }
@@ -30,30 +39,55 @@ public final class FastInvConfigs {
         textRenderer = new TextRenderer();
         itemFactory = new ItemFactory(textRenderer);
         actionRegistry = new ActionRegistry(textRenderer);
-        menuRegistry = new MenuRegistry();
 
-        actionRegistry.setMenuOpener((id, viewer) -> menu(id, viewer).open());
-
-        File menusFolder = new File(plugin.getDataFolder(), "menus");
-        if (!menusFolder.isDirectory()) {
-            saveDefaultMenus(plugin, menusFolder);
-        }
-        menuRegistry.loadFolder(menusFolder);
+        actionRegistry.setMenuOpener((id, viewer) -> open(id, viewer));
     }
 
-    public static ConfigMenu menu(String id, Player player) {
+    public static <T extends ConfiguredInventory> T register(T inventory) {
         ensureInitialized();
-        MenuConfig config = menuRegistry.get(id);
-        if (config == null) {
-            throw new IllegalArgumentException(
-                    "Menu '" + id + "' nie istnieje. Dostepne menu: " + menuRegistry.ids());
+
+        String id = inventory.id();
+        if (id == null || id.isEmpty()) {
+            throw new IllegalStateException("Inventory " + inventory.getClass().getSimpleName()
+                    + " has no id() — set it via id(\"...\") in the constructor.");
         }
-        return new ConfigMenu(config, player, textRenderer, itemFactory, actionRegistry);
+
+        File file = new File(plugin.getDataFolder(), "menus" + File.separator + id + ".yml");
+        File parent = file.getParentFile();
+        if (parent != null) {
+            parent.mkdirs();
+        }
+
+        MenuConfig config = inventory.config();
+        config.withConfigurer(new YamlBukkitConfigurer(), new SerdesBukkit());
+        config.withBindFile(file);
+        config.saveDefaults();
+        config.load();
+
+        Registered registered = new Registered(inventory, scanClickHandlers(inventory));
+        BY_CLASS.put(inventory.getClass(), registered);
+        BY_ID.put(id, registered);
+        return inventory;
     }
 
-    public static MenuRegistry registry() {
+    public static MenuView open(Class<? extends ConfiguredInventory> type, Player player) {
         ensureInitialized();
-        return menuRegistry;
+        Registered registered = BY_CLASS.get(type);
+        if (registered == null) {
+            throw new IllegalArgumentException("Inventory " + type.getSimpleName()
+                    + " is not registered. Call FastInvConfigs.register(...) in onEnable().");
+        }
+        return openInternal(registered, player);
+    }
+
+    public static MenuView open(String id, Player player) {
+        ensureInitialized();
+        Registered registered = BY_ID.get(id);
+        if (registered == null) {
+            throw new IllegalArgumentException("Inventory '" + id
+                    + "' is not registered. Available: " + BY_ID.keySet());
+        }
+        return openInternal(registered, player);
     }
 
     public static ActionRegistry actions() {
@@ -76,17 +110,42 @@ public final class FastInvConfigs {
         return plugin;
     }
 
+    private static MenuView openInternal(Registered registered, Player player) {
+        MenuView view = new MenuView(registered.inventory(), player, textRenderer, itemFactory,
+                actionRegistry, registered.handlers());
+        view.open();
+        return view;
+    }
+
+    private static Map<String, Method> scanClickHandlers(ConfiguredInventory inventory) {
+        Map<String, Method> handlers = new LinkedHashMap<>();
+        Class<?> type = inventory.getClass();
+        while (type != null && type != ConfiguredInventory.class && type != Object.class) {
+            for (Method method : type.getDeclaredMethods()) {
+                Click click = method.getAnnotation(Click.class);
+                if (click == null) {
+                    continue;
+                }
+                Class<?>[] parameters = method.getParameterTypes();
+                if (parameters.length != 1 || parameters[0] != ClickContext.class) {
+                    throw new IllegalStateException("@Click method " + method.getName() + " in "
+                            + type.getSimpleName() + " must have exactly one parameter of type ClickContext.");
+                }
+                method.setAccessible(true);
+                handlers.putIfAbsent(click.value(), method);
+            }
+            type = type.getSuperclass();
+        }
+        return handlers;
+    }
+
     private static void ensureInitialized() {
-        if (menuRegistry == null) {
+        if (actionRegistry == null) {
             throw new IllegalStateException(
-                    "FastInvConfigs nie zostalo zainicjalizowane. Wywolaj FastInvConfigs.init(plugin) w onEnable().");
+                    "FastInvConfigs is not initialized. Call FastInvConfigs.init(plugin) in onEnable().");
         }
     }
 
-    private static void saveDefaultMenus(JavaPlugin plugin, File menusFolder) {
-        menusFolder.mkdirs();
-        if (plugin.getResource("menus/shop.yml") != null) {
-            plugin.saveResource("menus/shop.yml", false);
-        }
+    private record Registered(ConfiguredInventory inventory, Map<String, Method> handlers) {
     }
 }

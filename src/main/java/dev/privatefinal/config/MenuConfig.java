@@ -18,7 +18,7 @@ public class MenuConfig extends OkaeriConfig {
 
     private List<Integer> contentSlots = new ArrayList<>();
 
-    private Character contentChar = null;
+    private String contentChar = null;
 
     public String getTitle() {
         return this.title;
@@ -44,7 +44,31 @@ public class MenuConfig extends OkaeriConfig {
         return this.contentSlots;
     }
 
-    public Character getContentChar() {
+    public String getContentChar() {
         return this.contentChar;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public void setRows(int rows) {
+        this.rows = rows;
+    }
+
+    public void setPattern(List<String> pattern) {
+        this.pattern = pattern;
+    }
+
+    public void addItem(String key, MenuItem item) {
+        this.items.put(key, item);
+    }
+
+    public void setContentSlots(List<Integer> contentSlots) {
+        this.contentSlots = contentSlots;
+    }
+
+    public void setContentChar(String contentChar) {
+        this.contentChar = contentChar;
     }
 }

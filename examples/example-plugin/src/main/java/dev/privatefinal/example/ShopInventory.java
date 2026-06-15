@@ -17,7 +17,7 @@ public class ShopInventory extends ConfiguredInventory {
 
     public ShopInventory() {
         id("shop");
-        title("<gradient:#ff5555:#55ff55>Sklep</gradient>");
+        title("<gradient:#ff5555:#55ff55>Shop</gradient>");
         rows(6);
         pattern(
                 "#########",
@@ -29,21 +29,21 @@ public class ShopInventory extends ConfiguredInventory {
         contentSlots(10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25,
                 28, 29, 30, 31, 32, 33, 34, 37, 38, 39, 40, 41, 42, 43);
         item("#").material("GRAY_STAINED_GLASS_PANE").name(" ");
-        item("P").material("ARROW").name("<yellow>Poprzednia strona").action("[page] prev");
-        item("N").material("ARROW").name("<yellow>Nastepna strona").action("[page] next");
+        item("P").material("ARROW").name("<yellow>Previous page").action("[page] prev");
+        item("N").material("ARROW").name("<yellow>Next page").action("[page] next");
         item("diament")
                 .material("DIAMOND")
-                .name("<aqua>Diament <gray>(klik mnie)")
-                .lore("<gray>Akcje z configu + handler z kodu")
+                .name("<aqua>Diamond <gray>(click me)")
+                .lore("<gray>Config actions + code handler")
                 .slots(4)
                 .glow()
-                .action("[sound] ENTITY_EXPERIENCE_ORB_PICKUP", "[broadcast] <gold>Ktos kliknal diament!");
+                .action("[sound] ENTITY_EXPERIENCE_ORB_PICKUP", "[broadcast] <gold>Someone clicked the diamond!");
     }
 
     @Click("diament")
     void onDiament(ClickContext ctx) {
         ctx.player().sendMessage(
-                FastInvConfigs.text().render("<green>Klik w diament obsluzony z poziomu kodu!", ctx.player()));
+                FastInvConfigs.text().render("<green>Diamond click handled from code!", ctx.player()));
     }
 
     @Override
@@ -57,7 +57,7 @@ public class ShopInventory extends ConfiguredInventory {
             ItemStack stack = new ItemStack(Material.PAPER, Math.min(index, 64));
             ItemMeta meta = stack.getItemMeta();
             if (meta != null) {
-                meta.displayName(FastInvConfigs.text().renderItem("<gray>Przedmiot <yellow>#" + index));
+                meta.displayName(FastInvConfigs.text().renderItem("<gray>Item <yellow>#" + index));
                 stack.setItemMeta(meta);
             }
             items.add(stack);
