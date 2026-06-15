@@ -1,0 +1,12 @@
+name: FastInvConfigsExample
+version: 1.0-SNAPSHOT
+main: dev.privatefinal.example.ExamplePlugin
+api-version: "1.21"
+author: privatefinal
+description: Przykladowy plugin demonstrujacy biblioteke FastInvConfigs.
+softdepend:
+  - PlaceholderAPI
+commands:
+  shop:
+    description: Otwiera przykladowe menu sklepu.
+    usage: /shop
