@@ -28,6 +28,10 @@ public class MenuItem extends OkaeriConfig {
 
     private Integer customModelData = null;
 
+    private String headTexture = null;
+
+    private List<String> flags = new ArrayList<>();
+
     private List<String> actions = new ArrayList<>();
 
     public MenuItem material(String material) {
@@ -84,6 +88,16 @@ public class MenuItem extends OkaeriConfig {
         return this;
     }
 
+    public MenuItem headTexture(String headTexture) {
+        this.headTexture = headTexture;
+        return this;
+    }
+
+    public MenuItem flags(String... flags) {
+        this.flags = new ArrayList<>(Arrays.asList(flags));
+        return this;
+    }
+
     public MenuItem action(String... actions) {
         this.actions.addAll(Arrays.asList(actions));
         return this;
@@ -123,6 +137,14 @@ public class MenuItem extends OkaeriConfig {
 
     public Integer getCustomModelData() {
         return this.customModelData;
+    }
+
+    public String getHeadTexture() {
+        return this.headTexture;
+    }
+
+    public List<String> getFlags() {
+        return this.flags;
     }
 
     public List<String> getActions() {

@@ -239,7 +239,7 @@ The built-in verbs are described in the [Declarative actions](#declarative-actio
 
 | Method | Returns | Description |
 |--------|---------|-------------|
-| `create(MenuItem item, Player player)` | `ItemStack` | Material, name, lore, amount, enchantments, glow, customModelData. |
+| `create(MenuItem item, Player player)` | `ItemStack` | Material, name, lore, amount, enchantments, glow, customModelData, head texture (`PLAYER_HEAD`). |
 
 ### `MenuItem` (DSL + model)
 
@@ -248,7 +248,11 @@ the DSL; getters used by the renderer. The fields are the YAML keys (see [Item d
 
 Setters: `material(String)`, `name(String)`, `lore(String...)`, `amount(int)`, `patternChar(char)`,
 `slots(int...)`, `enchant(String key, int level)`, `glow()`, `glow(boolean)`, `customModelData(int)`,
-`action(String...)`.
+`headTexture(String)`, `action(String...)`.
+
+For `material("PLAYER_HEAD")` set `headTexture(...)` — auto-detected: a **base64** value (from head
+databases like minecraft-heads), a texture **URL** (`http://textures.minecraft.net/texture/...`), or a
+**player name** (lookup, may block on first use; base64/URL work offline).
 
 ### `MenuConfig` (model)
 
@@ -300,6 +304,7 @@ Each entry under `items` (`key: { ... }`):
 | `enchants` | map `String -> int` | `{}` | Enchantments: a namespaced key → level (e.g. `sharpness: 5`). |
 | `glow` | boolean | `false` | A glow effect without visible enchantments. |
 | `customModelData` | int | `null` | Custom model data. |
+| `headTexture` | String | `null` | For `PLAYER_HEAD`: a base64 value, texture URL, or player name. |
 | `actions` | list of String | `[]` | Declarative actions executed on click. |
 
 **Material:** the name of an `org.bukkit.Material` constant (any case). An unknown name → `STONE`.

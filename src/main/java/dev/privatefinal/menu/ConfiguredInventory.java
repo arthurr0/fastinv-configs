@@ -3,6 +3,7 @@ package dev.privatefinal.menu;
 import dev.privatefinal.config.MenuConfig;
 import dev.privatefinal.config.MenuItem;
 import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.InventoryClickEvent;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -57,6 +58,9 @@ public abstract class ConfiguredInventory {
     }
 
     protected void onClose(MenuView view, Player player) {
+    }
+
+    protected void onContentClick(MenuView view, Player player, int index, InventoryClickEvent event) {
     }
 
     public final String id() {

@@ -128,13 +128,31 @@ public class MenuView extends FastInv {
     protected void onClick(InventoryClickEvent event) {
         event.setCancelled(true);
 
-        String itemId = this.slotToItemId.get(event.getRawSlot());
+        int rawSlot = event.getRawSlot();
+        String itemId = this.slotToItemId.get(rawSlot);
         if (itemId == null) {
+            this.invokeContentClick(rawSlot, event);
             return;
         }
 
         this.runConfiguredActions(itemId, event);
         this.invokeClickHandler(itemId, event);
+    }
+
+    private void invokeContentClick(int slot, InventoryClickEvent event) {
+        int capacity = this.contentSlots.size();
+        if (capacity == 0) {
+            return;
+        }
+        int position = this.contentSlots.indexOf(slot);
+        if (position < 0) {
+            return;
+        }
+        int index = (this.page - 1) * capacity + position;
+        if (index < 0 || index >= this.content.size()) {
+            return;
+        }
+        this.definition.onContentClick(this, this.player, index, event);
     }
 
     private void runConfiguredActions(String itemId, InventoryClickEvent event) {

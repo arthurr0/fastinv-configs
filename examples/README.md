@@ -10,6 +10,7 @@ A minimal Paper plugin showing **code-first** usage of the `FastInvConfigs` libr
 - the hybrid model: declarative actions on the item (`[sound]`, `[broadcast]`, `[page]`) **plus** `@Click`,
 - pagination — `onOpen(...)` fills the `contentSlots` zone, the `P`/`N` buttons scroll pages,
 - a custom `[broadcast]` action (`FastInvConfigs.actions().register(...)`),
+- a custom-textured player head (`PLAYER_HEAD` + `headTexture("Notch")`),
 - MiniMessage + PlaceholderAPI in names and lore.
 
 The `/shop` command opens the menu (`FastInvConfigs.open(ShopInventory.class, player)`).

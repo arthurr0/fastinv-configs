@@ -29,6 +29,11 @@ public class ShopInventory extends ConfiguredInventory {
         contentSlots(10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25,
                 28, 29, 30, 31, 32, 33, 34, 37, 38, 39, 40, 41, 42, 43);
         item("#").material("GRAY_STAINED_GLASS_PANE").name(" ");
+        item("head")
+                .material("PLAYER_HEAD")
+                .name("<gold>Notch's head")
+                .headTexture("Notch")
+                .slots(0);
         item("P").material("ARROW").name("<yellow>Previous page").action("[page] prev");
         item("N").material("ARROW").name("<yellow>Next page").action("[page] next");
         item("diament")

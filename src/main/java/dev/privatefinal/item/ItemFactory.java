@@ -1,79 +1,42 @@
 package dev.privatefinal.item;
 
+import com.destroystokyo.paper.profile.PlayerProfile;
+import com.destroystokyo.paper.profile.ProfileProperty;
 import dev.privatefinal.config.MenuItem;
 import dev.privatefinal.text.TextRenderer;
 import io.papermc.paper.registry.RegistryAccess;
 import io.papermc.paper.registry.RegistryKey;
-import net.kyori.adventure.text.Component;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.SkullMeta;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Locale;
-import java.util.Map;
+import java.util.UUID;
 
 public class ItemFactory {
 
-    private final TextRenderer textRenderer;
+    final TextRenderer textRenderer;
 
     public ItemFactory(TextRenderer textRenderer) {
         this.textRenderer = textRenderer;
     }
 
     public ItemStack create(MenuItem item, Player player) {
-        Material material = this.parseMaterial(item.getMaterial());
-        ItemStack stack = new ItemStack(material, Math.max(1, item.getAmount()));
-        ItemMeta meta = stack.getItemMeta();
-        if (meta == null) {
-            return stack;
-        }
-
-        String name = item.getName();
-        if (name != null && !name.isEmpty()) {
-            meta.displayName(this.textRenderer.renderItem(name, player));
-        }
-
-        List<String> loreLines = item.getLore();
-        if (loreLines != null && !loreLines.isEmpty()) {
-            List<Component> lore = new ArrayList<>();
-            for (String line : loreLines) {
-                lore.add(this.textRenderer.renderItem(line, player));
-            }
-            meta.lore(lore);
-        }
-
-        if (item.getCustomModelData() != null) {
-            meta.setCustomModelData(item.getCustomModelData());
-        }
-
-        Map<String, Integer> enchants = item.getEnchants();
-        boolean hasEnchants = enchants != null && !enchants.isEmpty();
-        if (hasEnchants) {
-            for (Map.Entry<String, Integer> entry : enchants.entrySet()) {
-                Enchantment enchantment = this.resolveEnchantment(entry.getKey());
-                if (enchantment != null) {
-                    int level = entry.getValue() == null ? 1 : Math.max(1, entry.getValue());
-                    meta.addEnchant(enchantment, level, true);
-                }
-            }
-        }
-
-        if (item.isGlow() && !hasEnchants) {
-            meta.addEnchant(Enchantment.UNBREAKING, 1, true);
-            meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-        }
-
-        stack.setItemMeta(meta);
-        return stack;
+        return this.builder(item, player).build();
     }
 
-    private Material parseMaterial(String name) {
+    public ItemRenderer builder(MenuItem item, Player player) {
+        return new ItemRenderer(this, item, player);
+    }
+
+    Material parseMaterial(String name) {
         if (name == null || name.isBlank()) {
             return Material.STONE;
         }
@@ -85,7 +48,36 @@ public class ItemFactory {
         }
     }
 
-    private Enchantment resolveEnchantment(String key) {
+    ItemFlag resolveItemFlag(String flag) {
+        if (flag == null || flag.isBlank()) {
+            return null;
+        }
+        try {
+            return ItemFlag.valueOf(flag.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException exception) {
+            return null;
+        }
+    }
+
+    void applyHead(SkullMeta skull, String texture) {
+        String value = texture.trim();
+        if (value.startsWith("http://") || value.startsWith("https://")) {
+            String json = "{\"textures\":{\"SKIN\":{\"url\":\"" + value + "\"}}}";
+            this.applyBase64(skull, Base64.getEncoder().encodeToString(json.getBytes(StandardCharsets.UTF_8)));
+        } else if (value.length() > 40) {
+            this.applyBase64(skull, value);
+        } else {
+            skull.setOwningPlayer(Bukkit.getOfflinePlayer(value));
+        }
+    }
+
+    private void applyBase64(SkullMeta skull, String base64) {
+        PlayerProfile profile = Bukkit.createProfile(UUID.randomUUID());
+        profile.setProperty(new ProfileProperty("textures", base64));
+        skull.setPlayerProfile(profile);
+    }
+
+    Enchantment resolveEnchantment(String key) {
         if (key == null || key.isBlank()) {
             return null;
         }
