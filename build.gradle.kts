@@ -65,6 +65,9 @@ publishing {
                 password = System.getenv("MINECODES_PASSWORD")
                     ?: providers.gradleProperty("minecodesPassword").orNull
             }
+            authentication {
+                create<BasicAuthentication>("basic")
+            }
         }
     }
 }
