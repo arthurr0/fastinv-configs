@@ -12,7 +12,9 @@ public class TextRenderer {
 
     private static final boolean PLACEHOLDER_API_PRESENT = resolvePlaceholderApi();
 
-    private MiniMessage miniMessage = MiniMessage.miniMessage();
+    private MiniMessage miniMessage = MiniMessage.builder()
+            .postProcessor(new LegacyColorProcessor())
+            .build();
 
     private BiFunction<Player, String, String> placeholderResolver;
 

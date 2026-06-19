@@ -28,7 +28,7 @@ dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT")
     compileOnly("me.clip:placeholderapi:2.11.6")
 
-    api("fr.mrmicky:fastinv:3.1.2")
+    api("fr.mrmicky:FastInv:3.1.1")
     api("eu.okaeri:okaeri-configs-yaml-bukkit:5.0.13")
     api("eu.okaeri:okaeri-configs-serdes-bukkit:5.0.13")
 

@@ -4,6 +4,7 @@ import dev.privatefinal.config.MenuConfig;
 import dev.privatefinal.config.MenuItem;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -54,6 +55,18 @@ public abstract class ConfiguredInventory {
         this.config.setContentChar(String.valueOf(contentChar));
     }
 
+    protected final void editableSlots(int... slots) {
+        List<Integer> list = new ArrayList<>();
+        for (int slot : slots) {
+            list.add(slot);
+        }
+        this.config.setEditableSlots(list);
+    }
+
+    protected final void editableChar(char editableChar) {
+        this.config.setEditableChar(String.valueOf(editableChar));
+    }
+
     protected void onOpen(MenuView view, Player player) {
     }
 
@@ -61,6 +74,16 @@ public abstract class ConfiguredInventory {
     }
 
     protected void onContentClick(MenuView view, Player player, int index, InventoryClickEvent event) {
+    }
+
+    protected void onClick(MenuView view, Player player, InventoryClickEvent event) {
+    }
+
+    protected void onDrag(MenuView view, Player player, InventoryDragEvent event) {
+    }
+
+    public String resolveTitle(Player player) {
+        return this.config.getTitle();
     }
 
     public final String id() {

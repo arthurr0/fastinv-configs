@@ -20,6 +20,10 @@ public class MenuConfig extends OkaeriConfig {
 
     private String contentChar = null;
 
+    private List<Integer> editableSlots = new ArrayList<>();
+
+    private String editableChar = null;
+
     public String getTitle() {
         return this.title;
     }
@@ -48,6 +52,14 @@ public class MenuConfig extends OkaeriConfig {
         return this.contentChar;
     }
 
+    public List<Integer> getEditableSlots() {
+        return this.editableSlots;
+    }
+
+    public String getEditableChar() {
+        return this.editableChar;
+    }
+
     public void setTitle(String title) {
         this.title = title;
     }
@@ -70,5 +82,13 @@ public class MenuConfig extends OkaeriConfig {
 
     public void setContentChar(String contentChar) {
         this.contentChar = contentChar;
+    }
+
+    public void setEditableSlots(List<Integer> editableSlots) {
+        this.editableSlots = editableSlots;
+    }
+
+    public void setEditableChar(String editableChar) {
+        this.editableChar = editableChar;
     }
 }

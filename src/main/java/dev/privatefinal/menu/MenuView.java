@@ -10,6 +10,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.inventory.ItemStack;
 
@@ -35,14 +36,16 @@ public class MenuView extends FastInv {
 
     private final Map<Integer, String> slotToItemId = new HashMap<>();
     private final List<Integer> contentSlots = new ArrayList<>();
+    private final List<Integer> editableSlots = new ArrayList<>();
     private final List<ItemStack> content = new ArrayList<>();
+    private final Map<String, Object> data = new HashMap<>();
 
     private int page = 1;
 
     public MenuView(ConfiguredInventory definition, Player player, TextRenderer textRenderer,
                     ItemFactory itemFactory, ActionRegistry actionRegistry, Map<String, Method> clickHandlers) {
         super(owner -> Bukkit.createInventory(owner, definition.config().getSize(),
-                textRenderer.render(definition.config().getTitle(), player)));
+                textRenderer.render(definition.resolveTitle(player), player)));
         this.definition = definition;
         this.config = definition.config();
         this.player = player;
@@ -50,9 +53,14 @@ public class MenuView extends FastInv {
         this.itemFactory = itemFactory;
         this.actionRegistry = actionRegistry;
         this.clickHandlers = clickHandlers;
-        this.contentSlots.addAll(this.resolveContentSlots());
+        this.contentSlots.addAll(this.resolveSlotZone(this.config.getContentSlots(), this.config.getContentChar()));
+        this.editableSlots.addAll(this.resolveSlotZone(this.config.getEditableSlots(), this.config.getEditableChar()));
         this.build();
         this.renderContent();
+    }
+
+    public Map<String, Object> data() {
+        return this.data;
     }
 
     public MenuView setContent(List<ItemStack> content) {
@@ -126,17 +134,59 @@ public class MenuView extends FastInv {
 
     @Override
     protected void onClick(InventoryClickEvent event) {
-        event.setCancelled(true);
-
         int rawSlot = event.getRawSlot();
-        String itemId = this.slotToItemId.get(rawSlot);
-        if (itemId == null) {
-            this.invokeContentClick(rawSlot, event);
+        int size = this.config.getSize();
+        boolean topSlot = rawSlot >= 0 && rawSlot < size;
+
+        String itemId = topSlot ? this.slotToItemId.get(rawSlot) : null;
+        if (itemId != null) {
+            event.setCancelled(true);
+            this.runConfiguredActions(itemId, event);
+            this.invokeClickHandler(itemId, event);
             return;
         }
 
-        this.runConfiguredActions(itemId, event);
-        this.invokeClickHandler(itemId, event);
+        boolean editable = this.isEditableClick(event, topSlot);
+        event.setCancelled(!editable);
+
+        if (topSlot) {
+            this.invokeContentClick(rawSlot, event);
+        }
+
+        this.definition.onClick(this, this.player, event);
+    }
+
+    @Override
+    protected void onDrag(InventoryDragEvent event) {
+        if (!this.editableSlots.isEmpty()) {
+            int size = this.config.getSize();
+            boolean allEditable = true;
+            for (int rawSlot : event.getRawSlots()) {
+                if (rawSlot < size && !this.editableSlots.contains(rawSlot)) {
+                    allEditable = false;
+                    break;
+                }
+            }
+            if (allEditable) {
+                event.setCancelled(false);
+            }
+        }
+        this.definition.onDrag(this, this.player, event);
+    }
+
+    private boolean isEditableClick(InventoryClickEvent event, boolean topSlot) {
+        if (this.editableSlots.isEmpty()) {
+            return false;
+        }
+        if (topSlot) {
+            return this.editableSlots.contains(event.getRawSlot());
+        }
+        return event.getClickedInventory() != null
+                && event.getClickedInventory().equals(event.getView().getBottomInventory());
+    }
+
+    public List<Integer> editableSlots() {
+        return this.editableSlots;
     }
 
     private void invokeContentClick(int slot, InventoryClickEvent event) {
@@ -200,11 +250,10 @@ public class MenuView extends FastInv {
         }
     }
 
-    private List<Integer> resolveContentSlots() {
+    private List<Integer> resolveSlotZone(List<Integer> explicit, String maskChar) {
         Set<Integer> slots = new LinkedHashSet<>();
         int size = this.config.getSize();
 
-        List<Integer> explicit = this.config.getContentSlots();
         if (explicit != null) {
             for (Integer slot : explicit) {
                 if (slot != null && slot >= 0 && slot < size) {
@@ -213,9 +262,8 @@ public class MenuView extends FastInv {
             }
         }
 
-        String contentChar = this.config.getContentChar();
-        if (contentChar != null && !contentChar.isEmpty()) {
-            slots.addAll(this.slotsForChar(contentChar.charAt(0)));
+        if (maskChar != null && !maskChar.isEmpty()) {
+            slots.addAll(this.slotsForChar(maskChar.charAt(0)));
         }
 
         return new ArrayList<>(slots);
