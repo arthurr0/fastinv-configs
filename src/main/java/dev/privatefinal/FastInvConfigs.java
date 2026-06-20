@@ -44,6 +44,10 @@ public final class FastInvConfigs {
     }
 
     public static <T extends ConfiguredInventory> T register(T inventory) {
+        return register(inventory, "menus");
+    }
+
+    public static <T extends ConfiguredInventory> T register(T inventory, String folder) {
         ensureInitialized();
 
         String id = inventory.id();
@@ -52,7 +56,9 @@ public final class FastInvConfigs {
                     + " has no id() — set it via id(\"...\") in the constructor.");
         }
 
-        File file = new File(plugin.getDataFolder(), "menus" + File.separator + id + ".yml");
+        String relativeFolder = folder == null || folder.isBlank() ? "menus" : folder;
+        File file = new File(plugin.getDataFolder(),
+                relativeFolder.replace('/', File.separatorChar) + File.separator + id + ".yml");
         File parent = file.getParentFile();
         if (parent != null) {
             parent.mkdirs();
